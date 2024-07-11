@@ -2,7 +2,7 @@ import asyncio
 import aiohttp
 import random
 import json
-from typing import List, Dict, Any
+from typing import List
 
 class UsernameChecker:
     def __init__(self, min_length: int, max_length: int, count: int, webhook_url: str) -> None:
@@ -55,14 +55,20 @@ class UsernameChecker:
     async def check_usernames_for_length(self, length: int) -> List[str]:
         usernames = self.generate_usernames(length, self.count)
         available_usernames = []
-        for username in usernames:
-            if await self.is_username_available(username):
-                available_usernames.append(username)
-                print(f"Username '{username}' is available.")
-                await self.send_to_webhook(f"Username '{username}' is available.")
-            else:
-                print(f"Username '{username}' is taken.")
-            await asyncio.sleep(0.1)
+        sem = asyncio.Semaphore(10)  # Limit to 10 concurrent tasks
+
+        async def check_username(username: str):
+            async with sem:
+                if await self.is_username_available(username):
+                    available_usernames.append(username)
+                    print(f"Username '{username}' is available.")
+                    await self.send_to_webhook(f"Username '{username}' is available.")
+                else:
+                    print(f"Username '{username}' is taken.")
+                await asyncio.sleep(0.5)  # Introduce a delay to avoid overloading the server
+
+        tasks = [check_username(username) for username in usernames]
+        await asyncio.gather(*tasks)
         return available_usernames
 
     async def check_usernames(self) -> List[str]:
