@@ -9,7 +9,9 @@ Lithos User Cracker is a Python script designed to check the availability of Rob
 
 ## Usage
 
-1. Clone the repository or download the `lithos_user_cracker.py` file.
+1. Clone the repository or download the .ZIP
 2. Install the required dependencies:
    ```bash
-   pip install aiohttp
+   @echo off
+   echo Installing requirements...
+   pip install -r requirements.txt
